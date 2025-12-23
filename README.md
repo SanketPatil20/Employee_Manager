@@ -182,6 +182,17 @@ GET /api/health
    vercel
    ```
 
+**Notes for this repo**:
+
+- The backend is exported as a serverless handler using `serverless-http`, so Vercel will run `server.js` as serverless functions as configured in `vercel.json`.
+- To add environment variables via the CLI (example):
+
+```bash
+vercel env add MONGODB_URI production
+```
+
+You can also set `MONGODB_URI` in the Vercel dashboard under Project Settings → Environment Variables.
+
 4. **Set environment variables** in Vercel dashboard:
    - `MONGODB_URI`: Your MongoDB connection string
 
