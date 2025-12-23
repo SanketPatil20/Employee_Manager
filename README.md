@@ -1,6 +1,6 @@
 # Leave & Productivity Analyzer
 
-Live demo: https://employee-management-omega-five.vercel.app/
+Live demo: https://employee-manager-steel.vercel.app/
 
 A full-stack web application that analyzes employee attendance, leave usage, and productivity from uploaded Excel attendance sheets.
 
