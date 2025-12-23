@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import uploadRoutes from './backend/routes/upload.js';
 import dashboardRoutes from './backend/routes/dashboard.js';
+import serverless from 'serverless-http';
 
 dotenv.config();
 
@@ -68,7 +69,13 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+const handler = serverless(app);
+
+export default handler;
+
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+}
 
