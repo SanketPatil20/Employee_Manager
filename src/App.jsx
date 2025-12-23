@@ -1,5 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
+import {
+  BurnupChart,
+  StackedDistribution,
+  ShiftFrequency,
+  ProductivityBullet,
+  calculateBurnupData,
+  calculateStackedData,
+  calculateShiftFrequency,
+} from './components/Visualizations';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -9,14 +18,16 @@ function App() {
   const [uploadMessage, setUploadMessage] = useState('');
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
-  
+
   // Default to current date, but will update automatically
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  
+
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [availableDates, setAvailableDates] = useState([]);
+  const [expandBreakdown, setExpandBreakdown] = useState(false); // Accordion state
+  const hasInitialized = useRef(false);
 
   // 1. Fetch employees list on load
   useEffect(() => {
@@ -32,7 +43,7 @@ function App() {
 
   // 3. When filters change, fetch the dashboard stats
   useEffect(() => {
-    if (selectedEmployee) {
+    if (selectedEmployee && selectedYear && selectedMonth) {
       fetchDashboardData();
     }
   }, [selectedEmployee, selectedYear, selectedMonth]);
@@ -57,22 +68,26 @@ function App() {
     try {
       const response = await fetch(`${API_BASE_URL}/dashboard/months/${encodeURIComponent(employeeName)}`);
       const data = await response.json();
-      
+
       if (data.monthYearCombos && data.monthYearCombos.length > 0) {
         setAvailableDates(data.monthYearCombos);
-        
-        // Find the latest entry to auto-select
-        // Sort by Year DESC, then Month DESC
-        const sorted = data.monthYearCombos.sort((a, b) => {
-          if (a.year !== b.year) return b.year - a.year;
-          return b.month - a.month;
-        });
 
-        const latest = sorted[0];
-        
-        // Auto-update state to show data immediately
-        setSelectedYear(latest.year);
-        setSelectedMonth(latest.month);
+        // Only auto-select the latest month on first load
+        if (!hasInitialized.current) {
+          hasInitialized.current = true;
+          // Find the latest entry to auto-select
+          // Sort by Year DESC, then Month DESC
+          const sorted = data.monthYearCombos.sort((a, b) => {
+            if (a.year !== b.year) return b.year - a.year;
+            return b.month - a.month;
+          });
+
+          const latest = sorted[0];
+
+          // Auto-update state to show data immediately
+          setSelectedYear(latest.year);
+          setSelectedMonth(latest.month);
+        }
       }
     } catch (error) {
       console.error('Error fetching available months:', error);
@@ -81,7 +96,7 @@ function App() {
 
   const fetchDashboardData = async () => {
     if (!selectedEmployee) return;
-    
+
     setLoading(true);
     try {
       const response = await fetch(
@@ -131,11 +146,11 @@ function App() {
         setUploadMessage(`✅ ${data.message}`);
         setFile(null);
         document.getElementById('file-input').value = '';
-        
+
         // Refresh everything
         await fetchEmployees();
         if (selectedEmployee) {
-            await fetchAvailableMonths(selectedEmployee);
+          await fetchAvailableMonths(selectedEmployee);
         }
       } else {
         let errorMsg = data.error || 'Upload failed';
@@ -171,8 +186,8 @@ function App() {
               onChange={handleFileChange}
               disabled={uploading}
             />
-            <button 
-              onClick={handleUpload} 
+            <button
+              onClick={handleUpload}
               disabled={uploading || !file}
               className="upload-btn"
             >
@@ -189,12 +204,12 @@ function App() {
         {employees.length > 0 && (
           <section className="dashboard-section">
             <h2>Dashboard</h2>
-            
+
             <div className="filters">
               <div className="filter-group">
                 <label>Employee:</label>
-                <select 
-                  value={selectedEmployee} 
+                <select
+                  value={selectedEmployee}
                   onChange={(e) => setSelectedEmployee(e.target.value)}
                 >
                   {employees.map(emp => (
@@ -202,7 +217,7 @@ function App() {
                   ))}
                 </select>
               </div>
-              
+
               <div className="filter-group">
                 <label>Year:</label>
                 <input
@@ -213,11 +228,11 @@ function App() {
                   max="2100"
                 />
               </div>
-              
+
               <div className="filter-group">
                 <label>Month:</label>
-                <select 
-                  value={selectedMonth} 
+                <select
+                  value={selectedMonth}
                   onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                 >
                   {months.map((month, index) => (
@@ -254,51 +269,84 @@ function App() {
                   </div>
                 </div>
 
+                {/* Visualizations Section */}
+                <div className="visualizations-section">
+                  <h2 style={{ marginTop: 0, marginBottom: '1.5rem', color: '#2c3e50' }}>Performance Analytics</h2>
+
+                  <div className="visualizations-grid">
+                    {/* Burnup Chart */}
+                    <div className="viz-card viz-large">
+                      <BurnupChart data={calculateBurnupData(dashboardData.dailyBreakdown, dashboardData.totalExpectedHours)} />
+                    </div>
+
+                    {/* Stacked Distribution */}
+                    <div className="viz-card viz-large">
+                      <StackedDistribution data={calculateStackedData(dashboardData.dailyBreakdown, dashboardData.totalExpectedHours)} />
+                    </div>
+
+                    {/* Shift Frequency */}
+                    <div className="viz-card">
+                      <ShiftFrequency data={calculateShiftFrequency(dashboardData.dailyBreakdown)} />
+                    </div>
+
+                    {/* Productivity Bullet */}
+                    <div className="viz-card">
+                      <ProductivityBullet productivity={dashboardData.productivity} target={90} />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="daily-breakdown">
-                  <h3>Daily Attendance Breakdown</h3>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Day</th>
-                        <th>In-Time</th>
-                        <th>Out-Time</th>
-                        <th>Worked Hours</th>
-                        <th>Expected Hours</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dashboardData.dailyBreakdown.map((record, index) => (
-                        <tr key={index}>
-                          <td>{new Date(record.date).toLocaleDateString()}</td>
-                          <td>{record.dayOfWeek}</td>
-                          <td>{record.inTime || '-'}</td>
-                          <td>{record.outTime || '-'}</td>
-                          <td>{record.workedHours.toFixed(2)}</td>
-                          <td>{record.expectedHours}</td>
-                          <td>
-                            {record.isLeave ? (
-                              <span className="badge leave">Leave</span>
-                            ) : record.workedHours > 0 ? (
-                              <span className="badge present">Present</span>
-                            ) : (
-                              <span className="badge absent">Absent</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      padding: '0.75rem',
+                      backgroundColor: expandBreakdown ? '#f0f0f0' : 'transparent',
+                      borderRadius: '4px',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onClick={() => setExpandBreakdown(!expandBreakdown)}
+                  >
+                    <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '1.2rem' }}>{expandBreakdown ? '▼' : '▶'}</span>
+                      Daily Attendance Breakdown
+                    </h3>
+                  </div>
+
+                  {expandBreakdown && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <ul style={{ listStyle: 'none', padding: 0 }}>
+                        {dashboardData.dailyBreakdown.map((record, index) => (
+                          <li key={index} style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
+                            <div style={{ minWidth: '120px', color: '#666' }}>{new Date(record.date).toLocaleDateString()}</div>
+                            <div style={{ marginLeft: 'auto' }}>
+                              {record.isLeave ? (
+                                <span className="badge leave">Leave</span>
+                              ) : record.expectedHours === 4 && record.workedHours > 0 ? (
+                                <span className="badge halfday">Half Day</span>
+                              ) : record.workedHours > 0 ? (
+                                <span className="badge present">Present</span>
+                              ) : (
+                                <span className="badge absent">Absent</span>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
               <div className="no-data">
-                <p>No data found for {months[selectedMonth-1]} {selectedYear}.</p>
+                <p>No data found for {months[selectedMonth - 1]} {selectedYear}.</p>
                 {availableDates.length > 0 && (
-                   <p className="hint">
-                     Available data for {selectedEmployee}: {availableDates.map(d => `${months[d.month-1]} ${d.year}`).join(', ')}
-                   </p>
+                  <p className="hint">
+                    Available data for {selectedEmployee}: {availableDates.map(d => `${months[d.month - 1]} ${d.year}`).join(', ')}
+                  </p>
                 )}
               </div>
             )}

@@ -11,9 +11,9 @@ const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-        file.mimetype === 'application/vnd.ms-excel' ||
-        file.originalname.endsWith('.xlsx') ||
-        file.originalname.endsWith('.xls')) {
+      file.mimetype === 'application/vnd.ms-excel' ||
+      file.originalname.endsWith('.xlsx') ||
+      file.originalname.endsWith('.xls')) {
       cb(null, true);
     } else {
       cb(new Error('Only Excel files (.xlsx, .xls) are allowed!'), false);
@@ -44,9 +44,9 @@ router.post('/', upload.single('file'), handleMulterError, async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
-    
+
     console.log('📤 File received:', req.file.originalname, 'Size:', req.file.size, 'bytes');
-    
+
     // Parse Excel file
     let records, errors;
     try {
@@ -55,28 +55,22 @@ router.post('/', upload.single('file'), handleMulterError, async (req, res) => {
       errors = result.errors;
     } catch (parseError) {
       console.error('Excel parsing error:', parseError);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Failed to parse Excel file',
         message: parseError.message,
         details: parseError.stack
       });
     }
-    
+
     if (records.length === 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'No valid records found in Excel file',
         errors: errors.length > 0 ? errors : ['Please check your Excel file format. Expected columns: Employee Name, Date, In-Time, Out-Time']
       });
     }
-    
+
     console.log(`📊 Parsed ${records.length} records, ${errors.length} errors`);
 
-    // In upload.js, after parsing the Excel file
-  records.forEach(record => {
-  record.year = record.date.getFullYear();
-  record.month = record.date.getMonth() + 1;
-});
-    
     // Store records in database
     // Use bulk write with upsert to handle duplicates
     const bulkOps = records.map(record => ({
@@ -91,7 +85,7 @@ router.post('/', upload.single('file'), handleMulterError, async (req, res) => {
         upsert: true
       }
     }));
-    
+
     try {
       await Attendance.bulkWrite(bulkOps);
       console.log('✅ Successfully saved records to database');
@@ -99,7 +93,7 @@ router.post('/', upload.single('file'), handleMulterError, async (req, res) => {
       console.error('Database error:', dbError);
       // Check if it's a connection error
       if (dbError.name === 'MongoServerError' || dbError.message.includes('connection')) {
-        return res.status(500).json({ 
+        return res.status(500).json({
           error: 'Database connection failed',
           message: 'Please check your MongoDB connection. Make sure your MongoDB Atlas connection string is correct in .env file.',
           details: dbError.message
@@ -107,11 +101,11 @@ router.post('/', upload.single('file'), handleMulterError, async (req, res) => {
       }
       throw dbError;
     }
-    
+
     // Get unique employees and months from uploaded data
     const employees = [...new Set(records.map(r => r.employeeName))];
     const months = [...new Set(records.map(r => ({ year: r.year, month: r.month })))];
-    
+
     res.json({
       success: true,
       message: `Successfully processed ${records.length} attendance records`,
@@ -120,11 +114,11 @@ router.post('/', upload.single('file'), handleMulterError, async (req, res) => {
       months,
       errors: errors.length > 0 ? errors : undefined
     });
-    
+
   } catch (error) {
     console.error('Upload error:', error);
     console.error('Error stack:', error.stack);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to process file',
       message: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined

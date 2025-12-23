@@ -18,7 +18,7 @@ export function isWorkingDay(date) {
  */
 export function getExpectedHours(date) {
   const dayOfWeek = date.getDay();
-  
+
   if (dayOfWeek === 0) {
     // Sunday - off
     return 0;
@@ -37,12 +37,14 @@ export function getExpectedHours(date) {
  */
 function parseTimeToMinutes(timeStr) {
   if (!timeStr) return null;
-  
+
   let time = String(timeStr).trim().toUpperCase();
-  
-  // Remove seconds if present
-  time = time.replace(/:\d{2}$/, '');
-  
+  // Normalize and remove extra whitespace
+  // If seconds are present (HH:MM:SS), drop the seconds portion
+  if (time.match(/^\d{1,2}:\d{2}:\d{2}/)) {
+    time = time.replace(/:\d{2}$/, '');
+  }
+
   // Handle AM/PM format
   let isPM = false;
   if (time.includes('PM')) {
@@ -51,22 +53,35 @@ function parseTimeToMinutes(timeStr) {
   } else if (time.includes('AM')) {
     time = time.replace('AM', '').trim();
   }
-  
+
   const parts = time.split(':');
-  if (parts.length < 2) return null;
-  
+  if (parts.length < 2) {
+    // Sometimes times may be like '1000' or '1000AM' - attempt to parse HHMM
+    const numeric = time.replace(/[^0-9]/g, '');
+    if (numeric.length === 4) {
+      const hours = parseInt(numeric.slice(0, 2), 10);
+      const minutes = parseInt(numeric.slice(2), 10);
+      if (isNaN(hours) || isNaN(minutes)) return null;
+      let hh = hours;
+      if (isPM && hh !== 12) hh += 12;
+      if (!isPM && hh === 12) hh = 0;
+      return hh * 60 + minutes;
+    }
+    return null;
+  }
+
   let hours = parseInt(parts[0], 10);
   const minutes = parseInt(parts[1], 10);
-  
+
   if (isNaN(hours) || isNaN(minutes)) return null;
-  
+
   // Handle 12-hour format
   if (isPM && hours !== 12) {
     hours += 12;
   } else if (!isPM && hours === 12) {
     hours = 0;
   }
-  
+
   return hours * 60 + minutes;
 }
 
@@ -77,23 +92,23 @@ function parseTimeToMinutes(timeStr) {
 export function calculateWorkedHours(inTimeStr, outTimeStr, date) {
   const inMinutes = parseTimeToMinutes(inTimeStr);
   const outMinutes = parseTimeToMinutes(outTimeStr);
-  
+
   if (inMinutes === null || outMinutes === null) {
     return 0;
   }
-  
+
   // Handle overnight shifts (if out-time is before in-time, assume next day)
   let workedMinutes = outMinutes - inMinutes;
   if (workedMinutes < 0) {
     workedMinutes += 24 * 60; // Add 24 hours
   }
-  
+
   // Convert to decimal hours
   const workedHours = workedMinutes / 60;
-  
+
   // Get expected hours for the day
   const expectedHours = getExpectedHours(date);
-  
+
   // Cap worked hours at expected hours (can't work more than expected)
   return Math.min(workedHours, expectedHours);
 }
@@ -104,12 +119,12 @@ export function calculateWorkedHours(inTimeStr, outTimeStr, date) {
 export function getExpectedHoursForMonth(year, month) {
   const daysInMonth = new Date(year, month, 0).getDate();
   let totalExpected = 0;
-  
+
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month - 1, day);
     totalExpected += getExpectedHours(date);
   }
-  
+
   return totalExpected;
 }
 
