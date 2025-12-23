@@ -11,10 +11,10 @@ A full-stack web application that analyzes employee attendance, leave usage, and
 - Interactive dashboard with monthly summaries and daily breakdowns
 - Business rules: Mon–Fri 8.5h/day, Sat 4h/day, Sun off, 2 leaves/month
 
-src=<img width="1892" height="912" alt="p1" src="https://github.com/user-attachments/assets/f99890d2-0273-482c-bcad-94af7bf97139"/>
-src=<img width="1833" height="765" alt="p2" src="https://github.com/user-attachments/assets/49de1d31-6033-42fa-ae6e-e952b6616839" />
-src= <img width="1808" height="702" alt="p3" src="https://github.com/user-attachments/assets/b2272bf0-797d-4d7e-bde3-ed18ee3b12c8" />
-src= <img width="1765" height="771" alt="p4" src="https://github.com/user-attachments/assets/072dd757-f59f-4336-a8d6-430e442028fa" />
+<img width="1892" height="912" alt="p1" src="https://github.com/user-attachments/assets/f99890d2-0273-482c-bcad-94af7bf97139"/>
+<img width="1833" height="765" alt="p2" src="https://github.com/user-attachments/assets/49de1d31-6033-42fa-ae6e-e952b6616839" />
+<img width="1808" height="702" alt="p3" src="https://github.com/user-attachments/assets/b2272bf0-797d-4d7e-bde3-ed18ee3b12c8" />
+<img width="1765" height="771" alt="p4" src="https://github.com/user-attachments/assets/072dd757-f59f-4336-a8d6-430e442028fa" />
 
 
 ## Tech Stack
@@ -80,20 +80,11 @@ Optional:
    npm run server
    ```
 
-## Excel file format (brief)
+## Excel file format
 
 Expect columns: Employee Name | Date | In-Time | Out-Time. Date format YYYY-MM-DD or Excel date; time HH:MM (24-hour) or with AM/PM. Missing in/out on working days is treated as leave.
 
 
-## Project structure (short)
-
-Employee_Management/
-├── backend/
-├── src/ (frontend)
-├── scripts/
-├── server.js
-├── package.json
-└── README.md
 
 ## License
 
