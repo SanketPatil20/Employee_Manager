@@ -78,17 +78,6 @@ Optional:
 
 Expect columns: Employee Name | Date | In-Time | Out-Time. Date format YYYY-MM-DD or Excel date; time HH:MM (24-hour) or with AM/PM. Missing in/out on working days is treated as leave.
 
-## Useful API endpoints
-
-- POST /api/upload — Upload an Excel file (multipart/form-data)
-- GET /api/dashboard?employeeName={name}&year={year}&month={month} — Dashboard data
-- GET /api/dashboard/employees — Employees list
-- GET /api/dashboard/months/:employeeName — Available months
-- GET /api/health — Health check
-
-## Live demo
-
-https://employee-management-omega-five.vercel.app/
 
 ## Project structure (short)
 
