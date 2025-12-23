@@ -52,6 +52,18 @@ function App() {
   const fetchEmployees = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/dashboard/employees`);
+      if (!response.ok) {
+        console.error('Backend error - Health check:', response.status, response.statusText);
+        // Try health endpoint to debug
+        try {
+          const healthRes = await fetch(`${API_BASE_URL}/health`);
+          const healthData = await healthRes.json();
+          console.error('Health status:', healthData);
+        } catch (e) {
+          console.error('Health check failed:', e);
+        }
+        return;
+      }
       const data = await response.json();
       if (data.employees && data.employees.length > 0) {
         setEmployees(data.employees);
@@ -59,9 +71,13 @@ function App() {
         if (!selectedEmployee) {
           setSelectedEmployee(data.employees[0]);
         }
+      } else {
+        console.warn('No employees found in database');
+        setUploadMessage('⚠️ No employees found. Please upload an Excel file first.');
       }
     } catch (error) {
       console.error('Error fetching employees:', error);
+      setUploadMessage('❌ Failed to connect to backend. Check console for details.');
     }
   };
 
