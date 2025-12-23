@@ -10,7 +10,8 @@ import {
   calculateShiftFrequency,
 } from './components/Visualizations';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Determine API base URL: use env variable if set, else use current domain (for Vercel), else localhost for dev
+const API_BASE_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' ? `${window.location.origin}/api` : 'http://localhost:5000/api');
 
 function App() {
   const [file, setFile] = useState(null);
