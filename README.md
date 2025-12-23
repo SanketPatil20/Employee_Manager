@@ -193,6 +193,33 @@ vercel env add MONGODB_URI production
 
 You can also set `MONGODB_URI` in the Vercel dashboard under Project Settings → Environment Variables.
 
+## Live Demo
+
+The app is deployed at: https://employee-management-omega-five.vercel.app/
+
+## Screenshots
+
+Below are example screenshots from the deployed app. To include these images in the README, add the image files to `docs/screenshots/` and use the example markdown below (the repository currently contains placeholders; I can add the actual image files if you provide them or allow me to upload them here):
+
+```markdown
+![Upload and Dashboard](docs/screenshots/dashboard_upload.png)
+
+![Performance Analytics (Burnup + Distribution)](docs/screenshots/performance_analytics.png)
+
+![Shift Frequency + Productivity Bullet](docs/screenshots/shift_productivity.png)
+
+![Daily Attendance Breakdown](docs/screenshots/daily_breakdown.png)
+```
+
+Recommended filenames (place in `docs/screenshots/`):
+
+- `dashboard_upload.png` — upload success and top-level dashboard cards
+- `performance_analytics.png` — burnup and monthly distribution charts
+- `shift_productivity.png` — shift frequency and productivity bullet graph
+- `daily_breakdown.png` — collapsed daily attendance breakdown / badges
+
+If you want, I can add these image files into the repo for you — either upload them here or tell me where the screenshots are, and I'll commit them into `docs/screenshots/` and update this README to show them inline.
+
 4. **Set environment variables** in Vercel dashboard:
    - `MONGODB_URI`: Your MongoDB connection string
 
